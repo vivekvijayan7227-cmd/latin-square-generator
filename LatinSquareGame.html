@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latin Square Puzzle</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Content */
+        :root {
+            --bg-color: #ffffff;
+            --surface-color: #f1f5f9;
+            --primary-color: #0ea5e9;
+            --accent-color: #6366f1;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --grid-gap: 8px;
+            --cell-size: 70px;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* Game Stats */
+        .game-stats {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+
+        /* Updated Game Stats */
+        .game-stats .stat-box {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 90px;
+        }
+
+        /* Results List Style */
+        .results-list {
+            width: 100%;
+            margin-bottom: 2rem;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 0;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 16px;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .res-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .res-value {
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+
+        #res-accuracy {
+            color: var(--primary-color);
+        }
+
+
+        .game-stats .label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .game-stats .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            font-family: monospace;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .controls-bar {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .difficulty-group {
+            background: var(--surface-color);
+            padding: 6px;
+            border-radius: 99px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .diff-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 10px 20px;
+            border-radius: 99px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .diff-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .diff-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.3);
+        }
+
+        .grid-board {
+            display: grid;
+            gap: var(--grid-gap);
+            padding: 16px;
+            background: var(--surface-color);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+        }
+
+        .grid-cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .grid-cell:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-cell.question-cell {
+            background-color: #fffbeb;
+            /* Very light amber */
+            border: 3px solid #f59e0b;
+            /* Thicker border */
+            position: relative;
+            cursor: pointer;
+        }
+
+        .grid-cell.question-cell::after {
+            content: "?";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #d97706;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 10;
+            /* Ensure it's on top */
+        }
+
+        .grid-cell.question-cell.question-filled::after {
+            display: none;
+        }
+
+        .grid-cell.selected {
+            border-color: var(--primary-color);
+            background: rgba(56, 189, 248, 0.1);
+            transform: scale(1.05);
+        }
+
+        .grid-cell.initial {
+            background: rgba(148, 163, 184, 0.3);
+            cursor: default;
+            pointer-events: none;
+        }
+
+        /* Make SVG responsive inside cell */
+        .grid-cell .shape-svg {
+            width: 65%;
+            height: 65%;
+            z-index: 11;
+            position: relative;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        .palette-bar {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .palette-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: none;
+            background: var(--surface-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .palette-btn:hover {
+            transform: translateY(-4px);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .palette-btn svg {
+            width: 60%;
+            height: 60%;
+        }
+
+        .clear-btn {
+            font-weight: 800;
+            color: #ef4444;
+        }
+
+        footer {
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .status-msg {
+            min-height: 24px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .status-msg.error {
+            color: #ef4444;
+        }
+
+        .status-msg.success {
+            color: #22c55e;
+        }
+
+        .status-msg.info {
+            color: var(--text-secondary);
+        }
+
+        .action-btn {
+            background: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 2px solid var(--text-secondary);
+            box-shadow: none;
+        }
+
+        .action-btn.secondary:hover {
+            color: var(--text-primary);
+            border-color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .action-btn.small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            background: var(--surface-color);
+            color: var(--text-secondary);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: none;
+        }
+
+        .action-btn.small:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animations */
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .win-pulse {
+            animation: winPulse 0.5s ease-in-out;
+        }
+
+        @keyframes winPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+            }
+
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 20px 10px rgba(74, 222, 128, 0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .grid-cell {
+                width: 50px;
+                height: 50px;
+                border-radius: 8px;
+            }
+        }
+
+        /* Home & Results Screen Overlay */
+        .home-cover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .welcome-content h2 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 1rem 0;
+            width: 100%;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 0;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-val {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+
+        #res-correct {
+            color: #22c55e;
+        }
+
+        #res-incorrect {
+            color: #ef4444;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+
+        .summary-text {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .action-btn.large {
+            padding: 16px 48px;
+            font-size: 1.25rem;
+            min-width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Deductive Logical Puzzle</h1>
+        </header>
+
+        <!-- Home Screen / Welcome -->
+        <div id="home-screen" class="home-cover">
+            <div class="welcome-content">
+                <h2>Ready to test your logic?</h2>
+                <p>Solve as many puzzles as you can in 5 minutes!</p>
+                <button id="btn-start-game" class="action-btn primary large">Start Puzzle</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="home-cover" style="display: none;">
+            <div class="welcome-content">
+                <h2>Time's Up!</h2>
+
+                <div class="results-list">
+                    <div class="result-row">
+                        <span class="res-label">Number of Puzzles Attempted:</span>
+                        <span class="res-value" id="res-attempted">0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="res-label">Solved Correctly:</span>
+                        <span class="res-value" id="res-correct">0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="res-label">Accuracy:</span>
+                        <span class="res-value" id="res-accuracy">0%</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="display:none;">
+                    <!-- Hidden legacy grid, replaced by list above -->
+                </div>
+
+                <button id="btn-start-review" class="action-btn primary large">Review Puzzles</button>
+            </div>
+        </div>
+
+        <main id="game-area" style="display: none;">
+            <div id="grid-container" class="grid-board">
+                <!-- Grid items generated by JS -->
+            </div>
+
+            <div id="palette-container" class="palette-bar">
+                <!-- Shape buttons generated by JS -->
+            </div>
+        </main>
+
+        <footer id="game-footer" style="display: none;">
+            <div id="status-message" class="status-msg">Loading...</div>
+            <div class="footer-actions">
+                <button id="btn-show-answer" class="action-btn secondary" style="display: none;">Show Solution</button>
+            </div>
+
+            <!-- Review Controls -->
+            <div id="review-controls" class="footer-actions" style="display: none;">
+                <button id="btn-prev" class="action-btn secondary">Previous</button>
+                <span id="review-status" class="status-msg" style="margin: 0 10px; font-size: 0.9rem;">Puzzle 1/1</span>
+                <button id="btn-next" class="action-btn secondary">Next</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Stats Display -->
+    <div id="game-stats" class="game-stats" style="display: none;">
+        <div class="stat-box">
+            <span class="label">TIME</span>
+            <span id="timer-display" class="value">05:00</span>
+        </div>
+        <div class="stat-box">
+            <span class="label">ATTEMPTED</span>
+            <span id="attempted-display" class="value">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="label">SCORE</span>
+            <span id="score-display" class="value">0</span>
+        </div>
+    </div>
+
+    <!-- Libraries (Optional for basic gameplay but good to have) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Game Scripts -->
+    <script>
+        /**
+ * Generator Logic for Latin Square Puzzles
+ */
+
+        // Fisher-Yates shuffle
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Check if placing num at board[row][col] is valid
+        function isValid(board, row, col, num, size) {
+            // Check Row
+            for (let x = 0; x < size; x++) {
+                if (board[row][x] === num) return false;
+            }
+            // Check Col
+            for (let y = 0; y < size; y++) {
+                if (board[y][col] === num) return false;
+            }
+            return true;
+        }
+
+        // Backtracking solver to fill the board
+        function solveLatinSquare(board, size) {
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    if (board[row][col] === 0) {
+                        // Try numbers 1..size
+                        // randomize order to get different squares
+                        let nums = Array.from({ length: size }, (_, i) => i + 1);
+                        shuffle(nums);
+
+                        for (let num of nums) {
+                            if (isValid(board, row, col, num, size)) {
+                                board[row][col] = num;
+                                if (solveLatinSquare(board, size)) return true;
+                                board[row][col] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function generateLatinSquare(size) {
+            let board = Array.from({ length: size }, () => Array(size).fill(0));
+
+            // Fill first row randomly to speed up generation and ensure variety
+            let firstRow = Array.from({ length: size }, (_, i) => i + 1);
+            shuffle(firstRow);
+            board[0] = firstRow;
+
+            if (solveLatinSquare(board, size)) {
+                return board;
+            } else {
+                // Should generally not happen for small N
+                console.error("Failed to generate square");
+                return generateLatinSquare(size); // retry
+            }
+        }
+
+        function generatePuzzle(size, filledCount) {
+            const fullBoard = generateLatinSquare(size);
+            // Deep copy for the puzzle board
+            let puzzleBoard = JSON.parse(JSON.stringify(fullBoard));
+
+            let attempts = size * size - filledCount;
+            let positions = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    positions.push([r, c]);
+                }
+            }
+            shuffle(positions);
+
+            // Simple digging: remove cells until we reach filledCount
+            // In a robust constraint solver, we'd check uniqueness. 
+            // For this version, we just dig.
+            // We keep digging until we have 'filledCount' cells remaining.
+
+            let cellsToRemove = (size * size) - filledCount;
+
+            for (let i = 0; i < cellsToRemove; i++) {
+                let [r, c] = positions[i];
+                puzzleBoard[r][c] = 0; // 0 represents empty
+            }
+
+            return {
+                fullBoard,
+                puzzleBoard
+            };
+        }
+    </script>
+    <script>
+        /**
+ * UI Controller
+ */
+
+        const SHAPES = {
+            // 1. Star
+            1: { name: 'Star', svg: '<polygon points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35" fill="currentColor" />' },
+            // 2. Heart
+            2: { name: 'Heart', svg: '<path d="M50 88.9L16.7 55.6C7.2 46.1 7.2 30.9 16.7 21.4s24.7-9.5 33.3 0l0 0 0 0L50 21.4l0 0 0 0 0 0 0 0c8.6-9.5 23.8-9.5 33.3 0s9.5 24.7 0 34.2L50 88.9z" fill="currentColor" />' },
+            // 3. Spade
+            3: { name: 'Spade', svg: '<path d="M50 15c-20 0-35 20-35 35 0 20 25 35 35 40 10-5 35-20 35-40 0-15-15-35-35-35z M50 90 L50 75" fill="currentColor" stroke="currentColor" stroke-width="5"/>' },
+            // 4. Diamond (Card Suit)
+            4: { name: 'Diamond Suit', svg: '<path d="M50 5 L85 50 L50 95 L15 50 Z" fill="currentColor" />' },
+            // 5. Club
+            5: { name: 'Club', svg: '<path d="M50 20 A15 15 0 1 0 30 45 A15 15 0 1 0 50 70 A15 15 0 1 0 70 45 A15 15 0 1 0 50 20 Z M50 70 L50 90" fill="currentColor" stroke="currentColor" stroke-width="5"/>' },
+            // 6. Crescent Moon
+            6: { name: 'Crescent', svg: '<path d="M70 20 A 40 40 0 1 1 50 90 A 30 30 0 1 0 70 20 Z" fill="currentColor" />' },
+            // 7. Shield
+            7: { name: 'Shield', svg: '<path d="M20 10 L80 10 L80 40 C80 70 50 90 50 90 C50 90 20 70 20 40 Z" fill="currentColor" />' },
+            // 8. Crown
+            8: { name: 'Crown', svg: '<polygon points="10,70 90,70 90,30 70,50 50,10 30,50 10,30" fill="currentColor" />' },
+            // 9. Ring / Donut
+            9: { name: 'Ring', svg: '<path d="M50 15 A35 35 0 1 0 50 85 A35 35 0 1 0 50 15 Z M50 35 A15 15 0 1 1 50 65 A15 15 0 1 1 50 35 Z" fill="currentColor" fill-rule="evenodd"/>' },
+            // 10. Spiral
+            10: { name: 'Spiral', svg: '<path d="M50 50 m0 -5 a5 5 0 0 1 0 10 a10 10 0 0 1 0 -20 a15 15 0 0 1 0 30 a20 20 0 0 1 0 -40" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>' },
+            // 11. Wave
+            11: { name: 'Wave', svg: '<path d="M10 50 Q30 20 50 50 T90 50" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>' },
+            // 12. Lightning Bolt
+            12: { name: 'Lightning', svg: '<polygon points="55,5 25,50 50,50 45,95 75,50 50,50" fill="currentColor" />' },
+            // 13. Speech Bubble
+            13: { name: 'Speech', svg: '<path d="M10 30 A20 20 0 0 1 90 30 A20 20 0 0 1 90 70 A20 20 0 0 1 30 70 L20 85 L20 70 A20 20 0 0 1 10 30" fill="currentColor" />' },
+            // 14. Badge / Seal
+            14: { name: 'Badge', svg: '<circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="5" stroke-dasharray="8 4" fill="currentColor" />' }, // simplified
+            // 15. Starburst
+            15: { name: 'Starburst', svg: '<polygon points="50,10 60,35 85,25 75,50 100,60 75,70 85,95 60,85 50,110 40,85 15,95 25,70 0,60 25,50 15,25 40,35" fill="currentColor" />' },
+            // 16. Hexagram
+            16: { name: 'Hexagram', svg: '<polygon points="50,5 85,85 15,85" fill="none" stroke="currentColor" stroke-width="5" /><polygon points="50,95 85,15 15,15" fill="none" stroke="currentColor" stroke-width="5" />' }, // Outline style for clarity
+            // 17. Pentagon Star (Outline)
+            17: { name: 'Pentagon Star', svg: '<polygon points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35" fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round" />' },
+            // 18. Circle
+            18: { name: 'Circle', svg: '<circle cx="50" cy="50" r="40" fill="currentColor" />' },
+            // 19. Semicircle
+            19: { name: 'Semicircle', svg: '<path d="M10 50 A40 40 0 0 1 90 50 Z" fill="currentColor" />' },
+            // 20. Quarter Circle
+            20: { name: 'Quarter', svg: '<path d="M10 90 L90 90 L90 10 A80 80 0 0 0 10 90 Z" fill="currentColor" />' },
+            // 21. Oval
+            21: { name: 'Oval', svg: '<ellipse cx="50" cy="50" rx="40" ry="25" fill="currentColor" />' },
+            // 22. Equilateral Triangle
+            22: { name: 'Eq Triangle', svg: '<polygon points="50,15 90,85 10,85" fill="currentColor" />' },
+            // 23. Square
+            23: { name: 'Square', svg: '<rect x="15" y="15" width="70" height="70" fill="currentColor" />' },
+            // 24. Rectangle
+            24: { name: 'Rectangle', svg: '<rect x="10" y="25" width="80" height="50" fill="currentColor" />' },
+            // 25. Parallelogram
+            25: { name: 'Parallelogram', svg: '<polygon points="25,20 90,20 75,80 10,80" fill="currentColor" />' },
+            // 26. Rhombus (Geometric)
+            26: { name: 'Rhombus', svg: '<polygon points="50,10 80,50 50,90 20,50" fill="currentColor" />' },
+            // 27. Trapezoid
+            27: { name: 'Trapezoid', svg: '<polygon points="25,20 75,20 90,80 10,80" fill="currentColor" />' },
+            // 28. Kite
+            28: { name: 'Kite', svg: '<polygon points="50,10 80,40 50,90 20,40" fill="currentColor" />' },
+            // 29. Pentagon
+            29: { name: 'Pentagon', svg: '<polygon points="50,10 90,40 75,90 25,90 10,40" fill="currentColor" />' },
+            // 30. Hexagon
+            30: { name: 'Hexagon', svg: '<polygon points="25,10 75,10 95,50 75,90 25,90 5,50" fill="currentColor" />' },
+            // 31. Heptagon
+            31: { name: 'Heptagon', svg: '<polygon points="50,10 85,25 90,60 70,90 30,90 10,60 15,25" fill="currentColor" />' }, // Approx
+            // 32. Octagon
+            32: { name: 'Octagon', svg: '<polygon points="30,10 70,10 90,30 90,70 70,90 30,90 10,70 10,30" fill="currentColor" />' }
+        };
+
+        const COLORS = [
+            '#FF6B6B', // Red
+            '#4ECDC4', // Teal
+            '#FFE66D', // Yellow
+            '#1A535C', // Dark Blue
+            '#FF9F1C', // Orange
+            '#D7263D', // Deep Red
+            '#9B59B6', // Purple
+            '#3498DB', // Blue
+            '#2ECC71', // Green
+            '#E67E22', // Carrot
+            '#F1C40F', // Sun
+            '#95A5A6', // Concrete
+            '#34495E', // Wet Asphalt
+            '#16A085', // Green Sea
+            '#27AE60', // Nephritis
+            '#2980B9', // Belize Hole
+            '#8E44AD', // Wisteria
+            '#F39C12', // Orange Peel
+            '#C0392B', // Pomegranate
+            '#7F8C8D'  // Asbestos
+        ];
+
+        // Mapping from Logic Number (1..N) to Visual Shape ID (1..32)
+        let currentShapeMap = {};
+
+        function setShapeMap(map) {
+            currentShapeMap = map;
+        }
+
+        function getShapeSVG(num) {
+            if (!num) return '';
+            // Map logic number to visual shape ID
+            const shapeId = currentShapeMap[num] || num;
+
+            if (!SHAPES[shapeId]) return '';
+            // Assign color based on shapeId for visual distinction
+            const color = COLORS[(shapeId - 1) % COLORS.length];
+            return `<svg viewBox="0 0 100 100" class="shape-svg" style="color: ${color};">${SHAPES[shapeId].svg}</svg>`;
+        }
+
+        function renderGrid(container, board, initialBoard, questionCell, onCellClick) {
+            container.innerHTML = '';
+            const size = board.length;
+
+            container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    // Check if this is the question cell
+                    const isQuestionCell = questionCell && questionCell.r === r && questionCell.c === c;
+                    if (isQuestionCell) {
+                        cell.classList.add('question-cell');
+                    }
+
+                    const isInitial = initialBoard[r][c] !== 0;
+                    if (isInitial) {
+                        cell.classList.add('initial');
+                        cell.innerHTML = getShapeSVG(initialBoard[r][c]);
+                    } else {
+                        cell.classList.add('user-filled');
+                        const val = board[r][c];
+                        if (val !== 0) {
+                            cell.innerHTML = getShapeSVG(val);
+                            if (isQuestionCell) {
+                                cell.classList.add('question-filled');
+                            }
+                        }
+
+                        // Only allow click if it's the question cell (or generally allowing interaction, handled by logic)
+                        cell.onclick = () => {
+                            // Deselect previous
+                            document.querySelectorAll('.grid-cell.selected').forEach(el => el.classList.remove('selected'));
+                            // Select new
+                            cell.classList.add('selected');
+                            onCellClick(r, c);
+                        };
+                    }
+
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function renderPalette(container, size, onShapeSelect) {
+            container.innerHTML = '';
+            for (let i = 1; i <= size; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'palette-btn';
+                btn.innerHTML = getShapeSVG(i);
+                btn.onclick = () => onShapeSelect(i);
+                container.appendChild(btn);
+            }
+
+
+        }
+
+        function updateCell(container, r, c, val) {
+            const cell = container.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
+            if (cell) {
+                cell.innerHTML = val === 0 ? '' : getShapeSVG(val);
+
+                // If it's a question cell, toggle a class to hide/show the "?"
+                if (cell.classList.contains('question-cell')) {
+                    if (val !== 0) {
+                        cell.classList.add('question-filled');
+                    } else {
+                        cell.classList.remove('question-filled');
+                    }
+                }
+
+                // Add animation class
+                cell.classList.remove('pop-in');
+                void cell.offsetWidth; // trigger reflow
+                cell.classList.add('pop-in');
+            }
+        }
+
+        function showMessage(el, msg, type = 'info') {
+            el.innerText = msg;
+            el.className = `status-msg ${type}`;
+            setTimeout(() => {
+                el.className = 'status-msg'; // hide after 3s
+            }, 3000);
+        }
+    </script>
+    <script>
+        // import { generatePuzzle, isValid } from './generator.js';
+        // import * as UI from './ui.js';
+
+        const STATE = {
+            solution: null,
+            initial: null,
+            current: null,
+            size: 4,
+            selectedCell: null, // {r, c}
+            questionCell: null, // {r, c} - The cell with the '?'
+            score: 0,
+            timerInterval: null,
+            timeLeft: 300, // 5 minutes
+            gameActive: false,
+            currentDifficulty: 'easy',
+            history: [], // Array of { initial, solution, questionCell, userVal, result: 'correct'|'incorrect' }
+            reviewIndex: 0
+        };
+
+        // Update ELEMENTS to include results nodes
+        const ELEMENTS = {
+            grid: document.getElementById('grid-container'),
+            palette: document.getElementById('palette-container'),
+            status: document.getElementById('status-message'),
+            btnStartGame: document.getElementById('btn-start-game'),
+            btnHome: document.getElementById('btn-home'),
+            btnShowAnswer: document.getElementById('btn-show-answer'),
+            timerDisplay: document.getElementById('timer-display'),
+            scoreDisplay: document.getElementById('score-display'),
+            gameStats: document.getElementById('game-stats'),
+            homeScreen: document.getElementById('home-screen'),
+            gameArea: document.getElementById('game-area'),
+            gameFooter: document.getElementById('game-footer'),
+            // Review Controls
+            reviewControls: document.getElementById('review-controls'),
+            btnPrev: document.getElementById('btn-prev'),
+            btnNext: document.getElementById('btn-next'),
+            reviewStatus: document.getElementById('review-status'),
+            // Results Screen
+            // Results Screen 
+            resultsScreen: document.getElementById('results-screen'),
+            resAttempted: document.getElementById('res-attempted'),
+            resCorrect: document.getElementById('res-correct'),
+            resAccuracy: document.getElementById('res-accuracy'),
+            btnStartReview: document.getElementById('btn-start-review'),
+            attemptedDisplay: document.getElementById('attempted-display'),
+        };
+        // ... (initGame, startGame, tick, update functions same as before) ...
+
+        function endGame() {
+            STATE.gameActive = false;
+            clearInterval(STATE.timerInterval);
+            STATE.selectedCell = null;
+
+            // Calculate Stats
+            const totalAttempted = STATE.history.length;
+            const totalCorrect = STATE.score;
+            let accuracy = 0;
+
+            if (totalAttempted > 0) {
+                accuracy = Math.round((totalCorrect / totalAttempted) * 100);
+            }
+
+            // Show Results Screen
+            ELEMENTS.resAttempted.innerText = totalAttempted;
+            ELEMENTS.resCorrect.innerText = totalCorrect;
+            ELEMENTS.resAccuracy.innerText = `${accuracy}%`;
+
+            // ELEMENTS.resSummary.innerText = ... (Removed old summary if we replaced it with list, 
+            // but honestly the list + summary is fine, or we can clear it if not needed).
+            // The user didn't ask to remove the summary line, but the list covers it. 
+            // I'll leave the summary line blank to be safe or remove the code setting it.
+
+            ELEMENTS.gameArea.style.display = 'none';
+            ELEMENTS.gameFooter.style.display = 'none';
+            ELEMENTS.gameStats.style.display = 'none'; // Hide small stats
+            ELEMENTS.resultsScreen.style.display = 'flex';
+        }
+
+        function startReview() {
+            ELEMENTS.resultsScreen.style.display = 'none';
+            ELEMENTS.gameArea.style.display = 'block';
+            ELEMENTS.gameFooter.style.display = 'flex';
+
+            // Switch to Review Mode if history exists
+            if (STATE.history.length > 0) {
+                STATE.reviewIndex = 0;
+                ELEMENTS.reviewControls.style.display = 'flex';
+                ELEMENTS.btnShowAnswer.style.display = 'inline-block'; // Show the button!
+                showReviewPuzzle(0);
+                showMessage(ELEMENTS.status, `Reviewing Puzzle 1 of ${STATE.history.length}`, 'info');
+            } else {
+                showMessage(ELEMENTS.status, `No puzzles to review.`, 'info');
+            }
+        }
+
+        // ... (existing checkSolution, showReviewPuzzle) ...
+
+        if (ELEMENTS.btnStartReview) {
+            ELEMENTS.btnStartReview.onclick = startReview;
+        }
+
+        function showAnswer() {
+            // If we are in review mode (game not active, history exists)
+            if (!STATE.gameActive && STATE.history.length > 0) {
+                const data = STATE.history[STATE.reviewIndex];
+                // Restore correct map for this puzzle
+                setShapeMap(data.map);
+                // Render full solution
+                renderGrid(ELEMENTS.grid, data.fullBoard, data.puzzleBoard, data.questionCell, () => { });
+                showMessage(ELEMENTS.status, `Solution for Puzzle ${STATE.reviewIndex + 1}`, 'info');
+            } else {
+                // Fallback or debug
+                STATE.current = JSON.parse(JSON.stringify(STATE.solution));
+                renderGrid(ELEMENTS.grid, STATE.current, STATE.initial, STATE.questionCell, (r, c) => { });
+                showMessage(ELEMENTS.status, 'Here is the solution!', 'info');
+            }
+        }
+
+        function initGame(difficulty) {
+            let size = 4;
+            let filledCount = 8; // Default Easy
+
+            if (difficulty === 'medium') {
+                size = 5;
+                filledCount = 10;
+            } else if (difficulty === 'hard') {
+                size = 4;
+                filledCount = 4;
+            }
+
+            STATE.size = size;
+            const { fullBoard, puzzleBoard } = generatePuzzle(size, filledCount);
+
+            // Randomize Visual Shapes
+            let shapeIndices = Array.from({ length: 32 }, (_, i) => i + 1);
+            for (let i = shapeIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shapeIndices[i], shapeIndices[j]] = [shapeIndices[j], shapeIndices[i]];
+            }
+
+            let map = {};
+            for (let i = 1; i <= size; i++) {
+                map[i] = shapeIndices[i - 1];
+            }
+            setShapeMap(map);
+
+            STATE.solution = fullBoard;
+            STATE.initial = puzzleBoard;
+            STATE.current = JSON.parse(JSON.stringify(puzzleBoard));
+            STATE.selectedCell = null;
+
+            // Select a Question Cell (must be 0 in puzzleBoard)
+            let emptyCells = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (puzzleBoard[r][c] === 0) {
+                        emptyCells.push({ r, c });
+                    }
+                }
+            }
+
+            // Pick random empty cell
+            if (emptyCells.length > 0) {
+                const randIndex = Math.floor(Math.random() * emptyCells.length);
+                STATE.questionCell = emptyCells[randIndex];
+            } else {
+                STATE.questionCell = null;
+            }
+
+            // Auto-select the Question Cell
+            STATE.selectedCell = STATE.questionCell;
+
+            renderGrid(ELEMENTS.grid, STATE.current, STATE.initial, STATE.questionCell, (r, c) => {
+                if (STATE.gameActive) {
+                    if (STATE.initial[r][c] !== 0) {
+                        STATE.selectedCell = null;
+                    } else {
+                        STATE.selectedCell = { r, c };
+                    }
+                }
+            });
+
+            // Manually trigger styling
+            if (STATE.selectedCell) {
+                const cell = ELEMENTS.grid.querySelector(`.grid-cell[data-row="${STATE.selectedCell.r}"][data-col="${STATE.selectedCell.c}"]`);
+                if (cell) cell.classList.add('selected');
+            }
+
+            renderPalette(ELEMENTS.palette, size, (val) => {
+                if (STATE.selectedCell && STATE.gameActive) {
+                    const { r, c } = STATE.selectedCell;
+
+                    STATE.current[r][c] = val;
+                    updateCell(ELEMENTS.grid, r, c, val);
+
+                    // AUTO-CHECK Logic
+                    if (r === STATE.questionCell.r && c === STATE.questionCell.c && val !== 0) {
+                        checkSolution();
+                    }
+                }
+            });
+        }
+
+        function startGame() {
+            ELEMENTS.homeScreen.style.display = 'none';
+            ELEMENTS.gameArea.style.display = 'block';
+            ELEMENTS.gameFooter.style.display = 'flex';
+            ELEMENTS.gameStats.style.display = 'flex';
+            ELEMENTS.reviewControls.style.display = 'none';
+
+            STATE.score = 0;
+            STATE.timeLeft = 300;
+            STATE.gameActive = true;
+            STATE.currentDifficulty = 'easy';
+            STATE.history = []; // Reset history
+
+            updateScoreDisplay();
+            updateTimerDisplay();
+
+            ELEMENTS.btnShowAnswer.style.display = 'none';
+
+            showMessage(ELEMENTS.status, 'Find the shape for "?"', 'info');
+
+            initGame(STATE.currentDifficulty);
+
+            if (STATE.timerInterval) clearInterval(STATE.timerInterval);
+            STATE.timerInterval = setInterval(tick, 1000);
+        }
+
+        function tick() {
+            STATE.timeLeft--;
+            updateTimerDisplay();
+
+            if (STATE.timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(STATE.timeLeft / 60);
+            const s = STATE.timeLeft % 60;
+            ELEMENTS.timerDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateScoreDisplay() {
+            ELEMENTS.scoreDisplay.innerText = STATE.score;
+            // Update attempt count
+            // History length is accurate because checkSolution calls this AFTER pushing history
+            if (ELEMENTS.attemptedDisplay) {
+                ELEMENTS.attemptedDisplay.innerText = STATE.history.length;
+            }
+        }
+
+        function getNextDifficulty(currentDiff, success) {
+            if (success) {
+                if (currentDiff === 'easy') return 'medium';
+                return 'hard';
+            } else {
+                if (currentDiff === 'hard') return 'medium';
+                return 'easy';
+            }
+        }
+
+        function checkSolution() {
+            if (!STATE.gameActive || !STATE.questionCell) return;
+
+            const { r, c } = STATE.questionCell;
+            const userVal = STATE.current[r][c];
+            const correctVal = STATE.solution[r][c];
+
+            if (userVal === 0) return;
+
+            const isCorrect = userVal === correctVal;
+
+            // Record History
+            STATE.history.push({
+                puzzleBoard: JSON.parse(JSON.stringify(STATE.initial)),
+                fullBoard: JSON.parse(JSON.stringify(STATE.solution)),
+                currentBoard: JSON.parse(JSON.stringify(STATE.current)), // Snapshot user's board
+                questionCell: { r, c },
+                userVal: userVal,
+                correctVal: correctVal,
+                result: isCorrect ? 'correct' : 'incorrect',
+                map: currentShapeMap // Needed to render correctly in review if map changes (it does)
+            });
+
+            if (isCorrect) {
+                STATE.score++;
+                updateScoreDisplay();
+                showMessage(ELEMENTS.status, 'Correct! Level Up!', 'success');
+                triggerWinAnimation();
+                STATE.currentDifficulty = getNextDifficulty(STATE.currentDifficulty, true);
+            } else {
+                updateScoreDisplay(); // Update stats (attempted count)
+                showMessage(ELEMENTS.status, 'Incorrect. Level Down.', 'error');
+                STATE.currentDifficulty = getNextDifficulty(STATE.currentDifficulty, false);
+            }
+
+            // Next Puzzle
+            setTimeout(() => {
+                initGame(STATE.currentDifficulty);
+            }, 500);
+        }
+
+        // Review Logic
+        function showReviewPuzzle(index) {
+            if (index < 0 || index >= STATE.history.length) return;
+            STATE.reviewIndex = index;
+
+            const data = STATE.history[index];
+
+            // Restore the map used for that puzzle! 
+            // Wait, global currentShapeMap is used by UI.js. 
+            // We need to temporarily set it to render this puzzle.
+            setShapeMap(data.map);
+
+            // Construct a board that shows user's answer
+            // Actually data.currentBoard has user's answer.
+            // But we might want to overlay the correct answer if they were wrong.
+
+            let displayBoard = JSON.parse(JSON.stringify(data.currentBoard));
+
+            // If incorrect, maybe show correct answer next to it? 
+            // For now, let's just show what they did. User can infer.
+
+            // Update Status
+            ELEMENTS.reviewStatus.innerText = `Puzzle ${index + 1} / ${STATE.history.length} (${data.result.toUpperCase()})`;
+
+            // Render
+            // We pass null for questionCell so no special borders, or maybe we want to highlight it?
+            // Let's highlight it to show context
+            renderGrid(ELEMENTS.grid, displayBoard, data.puzzleBoard, data.questionCell, () => { });
+
+            // Also re-render palette to match the shapes of this puzzle
+            renderPalette(ELEMENTS.palette, data.puzzleBoard.length, () => { });
+
+            // Add visual indicator of correctness on the cell?
+            // We can't easily modify DOM inside renderGrid without custom logic.
+            // Let's us showMessage for context
+            if (data.result === 'correct') {
+                showMessage(ELEMENTS.status, `Puzzle ${index + 1}: Correct!`, 'success');
+            } else {
+                showMessage(ELEMENTS.status, `Puzzle ${index + 1}: Incorrect. You picked the wrong shape.`, 'error');
+            }
+        }
+
+        // Review Buttons
+        if (ELEMENTS.btnPrev) {
+            ELEMENTS.btnPrev.onclick = () => {
+                if (STATE.reviewIndex > 0) {
+                    showReviewPuzzle(STATE.reviewIndex - 1);
+                }
+            };
+        }
+
+        if (ELEMENTS.btnNext) {
+            ELEMENTS.btnNext.onclick = () => {
+                if (STATE.reviewIndex < STATE.history.length - 1) {
+                    showReviewPuzzle(STATE.reviewIndex + 1);
+                }
+            };
+        }
+
+
+
+        if (ELEMENTS.btnStartGame) {
+            ELEMENTS.btnStartGame.onclick = startGame;
+        }
+
+        if (ELEMENTS.btnShowAnswer) {
+            ELEMENTS.btnShowAnswer.onclick = showAnswer;
+        }
+
+        function triggerWinAnimation() {
+            ELEMENTS.grid.classList.add('win-pulse');
+            setTimeout(() => ELEMENTS.grid.classList.remove('win-pulse'), 1000);
+        }
+
+        function showMessage(el, msg, type = 'info') {
+            el.innerText = msg;
+            el.className = `status-msg ${type}`;
+        }
+    </script>
+</body>
+
+</html>
