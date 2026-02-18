@@ -522,7 +522,7 @@
         <div id="home-screen" class="home-cover">
             <div class="welcome-content">
                 <h2>Ready to test your logic?</h2>
-                <p>Solve as many puzzles as you can in 5 minutes!</p>
+                <p>Solve as many puzzles as you can in 10 minutes!</p>
                 <button id="btn-start-game" class="action-btn primary large">Start Puzzle</button>
             </div>
         </div>
@@ -584,7 +584,7 @@
     <div id="game-stats" class="game-stats" style="display: none;">
         <div class="stat-box">
             <span class="label">TIME</span>
-            <span id="timer-display" class="value">05:00</span>
+            <span id="timer-display" class="value">10:00</span>
         </div>
         <div class="stat-box">
             <span class="label">ATTEMPTED</span>
@@ -917,7 +917,7 @@
             questionCell: null, // {r, c} - The cell with the '?'
             score: 0,
             timerInterval: null,
-            timeLeft: 300, // 5 minutes
+            timeLeft: 600, // 10 minutes
             gameActive: false,
             currentDifficulty: 'easy',
             history: [], // Array of { initial, solution, questionCell, userVal, result: 'correct'|'incorrect' }
@@ -1117,7 +1117,7 @@
             ELEMENTS.reviewControls.style.display = 'none';
 
             STATE.score = 0;
-            STATE.timeLeft = 300;
+            STATE.timeLeft = 600;
             STATE.gameActive = true;
             STATE.currentDifficulty = 'easy';
             STATE.history = []; // Reset history
